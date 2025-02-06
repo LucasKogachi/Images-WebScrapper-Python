@@ -113,6 +113,18 @@ def move_jpgs(src_path: str, dest_path: str):
         except:
             error_log("Moving " + file, dest_path)
 
+def rename_jpgs(path: str, start = 1): # not using
+    create_folder(path + TEMP_FOLDER)
+    N = start
+    for file in sorted(glob.glob(path + "*.jpg")):
+        try:
+            shutil.move(file, path + TEMP_FOLDER + get_img_name(N) + ".jpg")
+            N += 1
+        except:
+            error_log("Renaming " + file, path)
+    move_jpgs(path + TEMP_FOLDER, path)
+    remove_folder(path + TEMP_FOLDER)
+
 ####################################################################################################
 ########################################   Resize Images   #########################################
 
