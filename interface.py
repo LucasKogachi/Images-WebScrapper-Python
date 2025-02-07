@@ -127,8 +127,15 @@ def convert_part_jpgs_to_pdf(path: str):
             pdf_name = get_input("\nPDF Name: ")
             if pdf_name == "":
                 break
-        msg = "Convert From Image " + images_lib.get_img_name(start) + " to: "
-        end = get_input(msg)
+        msg = "Start Page(" + images_lib.get_img_name(start) + "): "
+        new_start = get_input(msg)
+        try:
+            new_start = int(new_start)
+            if new_start > -1:
+                start = new_start
+        except:
+            pass
+        end = get_input("End Page: ")
         try:
             end = int(end)
             if end < start:
