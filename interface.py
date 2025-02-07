@@ -1,4 +1,5 @@
 import images_lib
+import archives_lib
 import os
 
 DEFAULT_FOLDER_NUMBER = 1 # starting folder number
@@ -174,6 +175,35 @@ def pdf_menu(folder_numbers: FolderNumber):
             break
 
 ####################################################################################################
+###########################################   Archives   ###########################################
+
+def archives_menu_options(folder_numbers: FolderNumber):
+    print("\nArchives Menu, Working Folder: " + str(folder_numbers.working))
+    print("1 - Update Maps from Archive")
+    print("2 - Update Map from Working Folder")
+    print("3 - Create Archive")
+    print("X - Exit")
+    option = get_input("\nChosen Option: ")
+    print()
+    return option
+
+def archives_menu(folder_numbers: FolderNumber):
+    while True:
+        working_folder_path = get_folder_path(folder_numbers.working)
+        option = archives_menu_options(folder_numbers)
+        if   option == "1": # update archive
+            archives_lib.update_archive()
+            print("Archive Maps Updated")
+        elif option == "2": # update working folder
+            archives_lib.update_map(working_folder_path)
+            print("Working Folder Map Updated")
+        elif option == "3": # create archive
+            archives_lib.create_archive()
+            print("Archive Created")
+        else:
+            break
+
+####################################################################################################
 ######################################   Set Folder Number   #######################################
 
 def folder_number_menu_options(folder_numbers: FolderNumber):
@@ -219,7 +249,7 @@ def main_menu_options():
     print("1 - Plan Download")                      # OK
     print("2 - Start Planned Download")
     print("3 - PDF")                                # OK
-    print("4 - Archives")
+    print("4 - Archives")                           # OK
     print("5 - Set Folder Numbers")                 # OK
     print("X - Exit")                               # OK
     option = get_input("\nChosen option: ")
@@ -237,7 +267,7 @@ def main_menu():
         elif option == "3": # pdf
             pdf_menu(folder_numbers)
         elif option == "4": # archives
-            return
+            archives_menu(folder_numbers)
         elif option == "5": # set folder numbers
             folder_number_menu(folder_numbers)
         else:               # exit
@@ -245,4 +275,4 @@ def main_menu():
 
 ####################################################################################################
 #############################################   Test   #############################################
-# path = "" # put "/" at the end if its not empty, only "/" is root
+# put "/" at the end if its not empty, only "/" is root and ("." or "./") is where youre working

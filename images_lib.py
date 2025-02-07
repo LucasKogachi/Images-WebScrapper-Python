@@ -237,4 +237,4 @@ def split_pdf(path: str, pdf_name: str, split1: str, split2: str, split2_start_p
 
 ####################################################################################################
 #############################################   Test   #############################################
-# path = "" # put "/" at the end if its not empty, only "/" is root
+# put "/" at the end if its not empty, only "/" is root and ("." or "./") is where youre working
