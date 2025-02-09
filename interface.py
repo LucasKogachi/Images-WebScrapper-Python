@@ -1,4 +1,5 @@
 import images_lib
+import scrapers_lib
 import archives_lib
 import os
 
@@ -60,6 +61,12 @@ def reattach_line_to_file(line: str, path: str, file: str):
 ####################################################################################################
 ########################################   Plan Download   #########################################
 
+def create_optional_folder(path: str):
+    msg = "Add New Folder in " + path + " (optional): "
+    new_folder = get_input(msg)
+    if new_folder:
+        create_folder(path + new_folder + "/")
+
 def plan_download_menu(folder_numbers: FolderNumber):
     while True:
         print("\nPress ENTER to exit/skip")
@@ -71,10 +78,7 @@ def plan_download_menu(folder_numbers: FolderNumber):
         folder_numbers.planning += 1
         create_folder(plan_folder_path)
         add_lines_to_file([url], plan_folder_path, URL_FILE)
-        msg = "Add New Folder in " + plan_folder_path + " (optional): "
-        new_folder = get_input(msg)
-        if new_folder: # != ""
-            create_folder(plan_folder_path + new_folder + "/")
+        create_optional_folder(plan_folder_path)
         print("Add PDF Titles (optional)")
         titles = []
         title_number = 1
@@ -90,7 +94,82 @@ def plan_download_menu(folder_numbers: FolderNumber):
 ####################################################################################################
 ###########################################   Download   ###########################################
 
+def download_menu_options(folder_numbers: FolderNumber):
+    print("\nDownload Menu, Download Folder: " + str(folder_numbers.download))
+    print("1 - Start Download")
+    print("2 - Configure Delay")
+    print("X - Exit")
+    option = get_input("\nChosen Option: ")
+    print()
+    return option
 
+def start_download(folder_numbers: FolderNumber):
+    url = ""
+    while True:
+        download_folder_path = get_folder_path(folder_numbers.download)
+        create_folder(download_folder_path) # if it doesnt exist
+        if os.path.isfile(download_folder_path + URL_FILE):
+            url = remove_1x_line_from_file(download_folder_path, URL_FILE)
+            print("\nURL: " + url)
+            if os.path.isfile(download_folder_path + URL_FILE):
+                os.remove(download_folder_path + URL_FILE)
+        else:
+            url = get_input("\nURL: ")
+            if url == "":
+                break
+            create_optional_folder(download_folder_path)
+        delay = scrapers_lib.get_delay()
+        scrapers_lib.site_scrap(url, download_folder_path, delay[0], delay[1])
+        print("Download COMPLETED")
+        images_lib.convert_all_to_jpg(download_folder_path)
+        images_lib.resize_jpgs(download_folder_path)
+        folder_numbers.download += 1
+
+def delay_menu_options(delay: list[float]):
+    print("\nConfigure Delay Menu")
+    print("1 - Set Minimum Delay(" + scrapers_lib.float_to_str(delay[0], 1) + ")")
+    print("2 - Set Maximum Delay(" + scrapers_lib.float_to_str(delay[1], 1) + ")")
+    print("X - Exit")
+    option = get_input("\nChosen Option: ")
+    print()
+    return option
+
+def delay_menu():
+    delay = scrapers_lib.get_delay()
+    while True:
+        option = delay_menu_options(delay)
+        if   option == "1": # Set Minimum Delay
+            msg = "\nMinimum Delay(" + scrapers_lib.float_to_str(delay[0], 1) + "): "
+            min_delay = get_input(msg)
+            try:
+                min_delay = float(min_delay)
+                if min_delay >= 0:
+                    delay[0] = min_delay
+                    scrapers_lib.set_delay(delay[0], delay[1])
+            except:
+                pass
+        elif option == "2": # Set Maximum Delay
+            msg = "\nMaximum Delay(" + scrapers_lib.float_to_str(delay[1], 1) + "): "
+            max_delay = get_input(msg)
+            try:
+                max_delay = float(max_delay)
+                if max_delay > delay[0]:
+                    delay[1] = max_delay
+                    scrapers_lib.set_delay(delay[0], delay[1])
+            except:
+                pass
+        else:
+            break
+
+def download_menu(folder_numbers: FolderNumber):
+    while True:
+        option = download_menu_options(folder_numbers)
+        if   option == "1": # Start Download
+            start_download(folder_numbers)
+        elif option == "2": # Configure Delay
+            delay_menu()
+        else:
+            break
 
 ####################################################################################################
 #############################################   PDF   ##############################################
@@ -253,12 +332,12 @@ def folder_number_menu(folder_numbers: FolderNumber):
 
 def main_menu_options():
     print("\nWeb Scraping")
-    print("1 - Plan Download")                      # OK
+    print("1 - Plan Download")
     print("2 - Start Planned Download")
-    print("3 - PDF")                                # OK
-    print("4 - Archives")                           # OK
-    print("5 - Set Folder Numbers")                 # OK
-    print("X - Exit")                               # OK
+    print("3 - PDF")
+    print("4 - Archives")
+    print("5 - Set Folder Numbers")
+    print("X - Exit")
     option = get_input("\nChosen option: ")
     print()
     return option
@@ -270,7 +349,7 @@ def main_menu():
         if   option == "1": # plan download
             plan_download_menu(folder_numbers)
         elif option == "2": # scrapers
-            return
+            download_menu(folder_numbers)
         elif option == "3": # pdf
             pdf_menu(folder_numbers)
         elif option == "4": # archives

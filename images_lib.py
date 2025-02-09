@@ -10,7 +10,7 @@ import fitz           # pip install pymupdf
 # 3 See .zfill in get_img_name()
 
 #   Steps
-# 1 Download, Convert, Resize
+# 1 Download, Convert to jpg, Resize
 # 2 Create PDF
 
 TEMP_FOLDER = "Temp/"           # dont forget "/" at the end, if not empty
