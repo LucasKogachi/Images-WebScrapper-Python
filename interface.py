@@ -107,7 +107,6 @@ def start_download(folder_numbers: FolderNumber):
     url = ""
     while True:
         download_folder_path = get_folder_path(folder_numbers.download)
-        create_folder(download_folder_path) # if it doesnt exist
         if os.path.isfile(download_folder_path + URL_FILE):
             url = remove_1x_line_from_file(download_folder_path, URL_FILE)
             print("\nURL: " + url)
@@ -117,6 +116,7 @@ def start_download(folder_numbers: FolderNumber):
             url = get_input("\nURL: ")
             if url == "":
                 break
+            create_folder(download_folder_path) # if it doesnt exist
             create_optional_folder(download_folder_path)
         delay = scrapers_lib.get_delay()
         scrapers_lib.site_scrap(url, download_folder_path, delay[0], delay[1])
@@ -331,7 +331,7 @@ def folder_number_menu(folder_numbers: FolderNumber):
 #############################################   Main   #############################################
 
 def main_menu_options():
-    print("\nWeb Scraping")
+    print("\nWeb Image Scraping")
     print("1 - Plan Download")
     print("2 - Start Planned Download")
     print("3 - PDF")

@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup # pip install beautifulsoup4
 # pip install html5lib, BeatifulSoup needs it, but no need to import
 
 DELAY_FILE = "delay.txt"
-MIN_DELAY_TIME = 10.0 # seconds
-MAX_DELAY_TIME = 15.0 # seconds
+MIN_DELAY_TIME = 4.0 # seconds
+MAX_DELAY_TIME = 8.0 # seconds
 
 def url_match(url: str, match_list: list[str]): # many sites
     for match in match_list:
