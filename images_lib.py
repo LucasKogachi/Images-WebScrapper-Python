@@ -29,9 +29,6 @@ def error_log(msg: str, path = ""):
 def get_img_name(number: int):
     return str(number).zfill(3)
 
-####################################################################################################
-###########################################   Download   ###########################################
-
 def verify_img_extension(img_file: str, path: str):
     x = img_file.rfind(".")
     img_extension = img_file[(x+1):]
@@ -47,20 +44,6 @@ def verify_img_extension(img_file: str, path: str):
             print(new_img_file_name + " Extension Renamed")
     except:
         error_log("Image " + img_file, path)
-
-def download_img(url: str, img_number: int, dest_path: str):
-    img_name = get_img_name(img_number)
-    x = url.rfind(".")                                # getting extension
-    img_file = dest_path + img_name + url[x:].lower()
-    r = requests.get(url, stream = True)              # stream, no interruptions
-    if r.status_code == 200:
-        with open(img_file, 'wb') as file:
-            r.raw.decode_content = True               # force decompress, instead from request
-            shutil.copyfileobj(r.raw, file)           # stream the data to a file object
-        print(img_file + " Created Successfully")
-        verify_img_extension(img_file, dest_path)
-    else:
-        error_log("Download " + img_file, dest_path)
 
 ####################################################################################################
 ########################################   Convert Image   #########################################
