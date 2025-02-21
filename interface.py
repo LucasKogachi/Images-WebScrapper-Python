@@ -1,18 +1,9 @@
 import general_lib
+from general_lib import FolderNumber # class
 import images_lib
 import scrapers_lib
 import archives_lib
 import os
-
-DEFAULT_FOLDER_NUMBER = 1 # starting folder number
-URL_FILE    = "url.txt"
-TITLES_FILE = "title.txt" # save titles for PDF
-
-class FolderNumber:
-    def __init__(self):
-        self.planning = DEFAULT_FOLDER_NUMBER
-        self.download = DEFAULT_FOLDER_NUMBER
-        self.working  = DEFAULT_FOLDER_NUMBER
 
 def get_input(msg: str):
     return input(msg).strip()
@@ -36,7 +27,7 @@ def plan_download_menu(folder_numbers: FolderNumber):
         plan_folder_path = general_lib.get_folder_path(folder_numbers.planning)
         folder_numbers.planning += 1
         general_lib.create_folder(plan_folder_path)
-        general_lib.add_lines_to_file([url], plan_folder_path, URL_FILE)
+        general_lib.add_lines_to_file([url], plan_folder_path, general_lib.URL_FILE)
         create_optional_folder(plan_folder_path)
         print("Add PDF Titles (optional)")
         titles = []
@@ -47,7 +38,7 @@ def plan_download_menu(folder_numbers: FolderNumber):
                 titles.append(title)
                 title_number += 1
             else:
-                general_lib.add_lines_to_file(titles, plan_folder_path, TITLES_FILE)
+                general_lib.add_lines_to_file(titles, plan_folder_path, general_lib.TITLES_FILE)
                 break
 
 ####################################################################################################
@@ -66,18 +57,18 @@ def start_download(folder_numbers: FolderNumber):
     url = ""
     while True:
         download_folder_path = general_lib.get_folder_path(folder_numbers.download)
-        if os.path.isfile(download_folder_path + URL_FILE):
-            url = general_lib.remove_1x_line_from_file(download_folder_path, URL_FILE)
+        if os.path.isfile(download_folder_path + general_lib.URL_FILE):
+            url = general_lib.remove_1x_line_from_file(download_folder_path, general_lib.URL_FILE)
             print("\nURL: " + url)
-            if os.path.isfile(download_folder_path + URL_FILE):
-                os.remove(download_folder_path + URL_FILE)
+            if os.path.isfile(download_folder_path + general_lib.URL_FILE):
+                os.remove(download_folder_path + general_lib.URL_FILE)
         else:
             url = get_input("\nURL: ")
             if url == "":
                 break
             general_lib.create_folder(download_folder_path) # if it doesnt exist
             create_optional_folder(download_folder_path)
-        scrapers_lib.site_scrap(url, download_folder_path)
+        scrapers_lib.site_scrap(url, folder_numbers.download)
         print("Download COMPLETED")
         images_lib.convert_all_to_jpg(download_folder_path)
         images_lib.resize_jpgs(download_folder_path)
@@ -145,9 +136,9 @@ def pdf_menu_options(folder_numbers: FolderNumber):
     return option
 
 def convert_all_jpgs_to_pdf(path: str):
-    pdf_name = general_lib.remove_1x_line_from_file(path, TITLES_FILE)
+    pdf_name = general_lib.remove_1x_line_from_file(path, general_lib.TITLES_FILE)
     if pdf_name:
-        print("PDF Name (" + TITLES_FILE + "): " + pdf_name)
+        print("PDF Name (" + general_lib.TITLES_FILE + "): " + pdf_name)
     else:
         pdf_name = get_input("PDF Name: ")
         if pdf_name == "":
@@ -157,9 +148,9 @@ def convert_all_jpgs_to_pdf(path: str):
 def convert_part_jpgs_to_pdf(path: str):
     start = 0
     while True:
-        pdf_name = general_lib.remove_1x_line_from_file(path, TITLES_FILE)
+        pdf_name = general_lib.remove_1x_line_from_file(path, general_lib.TITLES_FILE)
         if pdf_name:
-            print("\nPDF Name (" + TITLES_FILE + "): " + pdf_name)
+            print("\nPDF Name (" + general_lib.TITLES_FILE + "): " + pdf_name)
         else:
             pdf_name = get_input("\nPDF Name: ")
             if pdf_name == "":
@@ -176,12 +167,12 @@ def convert_part_jpgs_to_pdf(path: str):
         try:
             end = int(end)
             if end < start:
-                general_lib.reattach_line_to_file(pdf_name, path, TITLES_FILE)
+                general_lib.reattach_line_to_file(pdf_name, path, general_lib.TITLES_FILE)
                 break
             images_lib.convert_jpgs_to_pdf(path, pdf_name, start, end)
             start = end + 1
         except:
-            general_lib.reattach_line_to_file(pdf_name, path, TITLES_FILE)
+            general_lib.reattach_line_to_file(pdf_name, path, general_lib.TITLES_FILE)
             break
 
 def merge_pdfs(path: str):

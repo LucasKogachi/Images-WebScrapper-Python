@@ -1,6 +1,7 @@
 import general_lib
-import requests               # pip install requests
-from bs4 import BeautifulSoup # pip install beautifulsoup4
+from general_lib import FolderNumber # class
+import requests                      # pip install requests
+from bs4 import BeautifulSoup        # pip install beautifulsoup4
 # pip install html5lib, BeatifulSoup needs it, but no need to import
 
 def url_match(url: str, match_list: list[str]): # many sites
@@ -12,7 +13,29 @@ def url_match(url: str, match_list: list[str]): # many sites
 ####################################################################################################
 ###########################################   Scrapers   ###########################################
 
-def mangakakalot_scraper(url: str, dest_path: str):
+def mangakakalot_scraper(url: str, download_folder_number: int):
+    # entire manga
+    if url.find("chapter") == -1:
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, "html5lib")
+        gallery = soup.find("ul", {"class": "row-content-chapter"})
+        children = gallery.findChildren("a", recursive = True)
+        chapters = []
+        for child in children:
+            chapter = child.get("href")
+            chapters.append(chapter)
+        chapters.reverse()
+        if chapters:
+            start = download_folder_number + 1
+            for chapter in chapters[1:]:
+                new_folder = general_lib.get_folder_path(start)
+                general_lib.create_folder(new_folder)
+                general_lib.add_lines_to_file([chapter], new_folder, general_lib.URL_FILE)
+                start += 1
+            url = chapters[0]
+
+    # chapter
+    dest_path = general_lib.get_folder_path(download_folder_number)
     header = {}
     if url.find("chapmanganato") != -1:
         header = {"Referer": "https://chapmanganato.to/"}
@@ -33,11 +56,11 @@ def mangakakalot_scraper(url: str, dest_path: str):
 ####################################################################################################
 ###########################################   Selector   ###########################################
 
-def site_scrap(url: str, dest_path: str):
+def site_scrap(url: str, download_folder_number: int):
     if   url_match(url, ["chapmanganato", "mangakakalot"]):
-        mangakakalot_scraper(url, dest_path)
+        mangakakalot_scraper(url, download_folder_number)
     else:
-        general_lib.error_log("No Scraper for " + url, dest_path)
+        general_lib.error_log("No Scraper for " + url)
 
 ####################################################################################################
 #############################################   Test   #############################################

@@ -3,6 +3,17 @@ from PIL import Image # pip install pillow
 import requests       # pip install requests
 
 ####################################################################################################
+############################################   Class   #############################################
+
+DEFAULT_FOLDER_NUMBER = 1 # starting folder number
+
+class FolderNumber:
+    def __init__(self):
+        self.planning = DEFAULT_FOLDER_NUMBER
+        self.download = DEFAULT_FOLDER_NUMBER
+        self.working  = DEFAULT_FOLDER_NUMBER
+
+####################################################################################################
 ############################################   Errors   ############################################
 
 ERROR_FILE  = "errors.txt"
@@ -46,7 +57,10 @@ def float_to_str(number: float, max_cases: int): # trunc
 
 ####################################################################################################
 #####################################   Text/File Management   #####################################
-    
+
+URL_FILE    = "url.txt"
+TITLES_FILE = "title.txt" # save titles for PDF
+
 def add_lines_to_file(lines: list[str], path: str, file: str):
     if lines:
         f = open(path + file, "a")
