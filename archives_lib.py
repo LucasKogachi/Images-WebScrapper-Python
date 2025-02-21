@@ -1,3 +1,4 @@
+import general_lib
 import os, re
 
 ARCHIVE = "Archive/"
@@ -10,20 +11,14 @@ TEMP2   = "Temp2.txt"
 PREFIX  = "    "
 
 def create_archive():
-    if not os.path.exists(ARCHIVE):
-        os.mkdir(ARCHIVE)
-    if not os.path.exists(ARCHIVE + SPECIAL):
-        os.mkdir(ARCHIVE + SPECIAL)
-    if not os.path.exists(ARCHIVE + MIXED):
-        os.mkdir(ARCHIVE + MIXED)
+    general_lib.create_folder(ARCHIVE)
+    general_lib.create_folder(ARCHIVE + SPECIAL)
+    general_lib.create_folder(ARCHIVE + MIXED)
     for X in FOLDERS:
-        if not os.path.exists(ARCHIVE + X + "/"):
-            os.mkdir(ARCHIVE + X + "/")
-        if not os.path.exists(ARCHIVE + X + "/" + SPECIAL):
-            os.mkdir(ARCHIVE + X + "/" + SPECIAL)
+        general_lib.create_folder(ARCHIVE + X + "/")
+        general_lib.create_folder(ARCHIVE + X + "/" + SPECIAL)
         for Y in FOLDERS:
-            if not os.path.exists(ARCHIVE + X + "/" + Y + "/"):
-                os.mkdir(ARCHIVE + X + "/" + Y + "/")
+            general_lib.create_folder(ARCHIVE + X + "/" + Y + "/")
 
 ####################################################################################################
 #############################################   Map   ##############################################

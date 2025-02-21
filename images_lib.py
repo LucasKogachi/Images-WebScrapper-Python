@@ -1,49 +1,12 @@
-import os, shutil, glob
-import requests
+import general_lib
+import os, shutil, glob, math
 from PIL import Image # pip install pillow
-import math
 import fitz           # pip install pymupdf
 
-#   Images
-# 1 Named with 001, 002, 003 and so on ...
-# 2 Easier to sort
-# 3 See .zfill in get_img_name()
-
-#   Steps
-# 1 Download, Convert to jpg, Resize
-# 2 Create PDF
-
 TEMP_FOLDER = "Temp/"           # dont forget "/" at the end, if not empty
-ERROR_FILE  = "errors.txt"
 EXTENSIONS  = ["png", "webp"]   # to convert to jpg
 MARGIN = 0.1                    # % safety margin, resize(bytes)
 MAX_IMG_SIZE = 600000           # image size, bytes
-
-def error_log(msg: str, path = ""):
-    error = "ERROR: " + msg
-    f = open(path + ERROR_FILE, "a")
-    f.write(error + "\n")
-    f.close()
-    print(error)
-
-def get_img_name(number: int):
-    return str(number).zfill(3)
-
-def verify_img_extension(img_file: str, path: str):
-    x = img_file.rfind(".")
-    img_extension = img_file[(x+1):]
-    try:
-        with Image.open(img_file) as img:
-            new_extension = img.format.lower()
-            img.verify()
-            if new_extension == "jpeg":
-                new_extension = "jpg"
-        if img_extension != new_extension:
-            new_img_file_name = img_file[:(x+1)] + new_extension
-            os.rename(img_file, new_img_file_name)
-            print(new_img_file_name + " Extension Renamed")
-    except:
-        error_log("Image " + img_file, path)
 
 ####################################################################################################
 ########################################   Convert Image   #########################################
@@ -60,21 +23,10 @@ def convert_all_to_jpg(path: str, extensions = EXTENSIONS):
             except:
                 if os.path.isfile(file[:(-x)] + "jpg"):
                     os.remove(file[:(-x)] + "jpg")
-                error_log("Conversion of " + file + " to jpg", path)
+                general_lib.error_log("Conversion of " + file + " to jpg", path)
 
 ####################################################################################################
 ###################################   Image/Folder Management   ####################################
-
-def create_folder(path: str):
-    if not os.path.exists(path):
-        os.mkdir(path)
-
-def remove_folder(path: str):
-    if os.path.isdir(path):
-        try:
-            os.rmdir(path)
-        except:
-            error_log("Deleting Folder, Remaining Files in " + path)
 
 def remove_jpgs(path: str, jpgs_list = []):
     if jpgs_list: # not empty
@@ -86,7 +38,7 @@ def remove_jpgs(path: str, jpgs_list = []):
             try:
                 os.remove(file)
             except:
-                error_log("Deleting" + file, path)
+                general_lib.error_log("Deleting" + file, path)
 
 def move_jpgs(src_path: str, dest_path: str):
     x = len(src_path)
@@ -94,19 +46,19 @@ def move_jpgs(src_path: str, dest_path: str):
         try:
             shutil.move(file, dest_path + file[x:])
         except:
-            error_log("Moving " + file, dest_path)
+            general_lib.error_log("Moving " + file, dest_path)
 
 def rename_jpgs(path: str, start = 1): # not using
-    create_folder(path + TEMP_FOLDER)
+    general_lib.create_folder(path + TEMP_FOLDER)
     N = start
     for file in sorted(glob.glob(path + "*.jpg")):
         try:
-            shutil.move(file, path + TEMP_FOLDER + get_img_name(N) + ".jpg")
+            shutil.move(file, path + TEMP_FOLDER + general_lib.get_img_name(N) + ".jpg")
             N += 1
         except:
-            error_log("Renaming " + file, path)
+            general_lib.error_log("Renaming " + file, path)
     move_jpgs(path + TEMP_FOLDER, path)
-    remove_folder(path + TEMP_FOLDER)
+    general_lib.remove_folder(path + TEMP_FOLDER)
 
 ####################################################################################################
 ########################################   Resize Images   #########################################
@@ -139,18 +91,18 @@ def resize_x1(path: str, coefficient: float):
                 img.thumbnail(new_img_size(coefficient, img.size), Image.ANTIALIAS)
                 img.save(path + TEMP_FOLDER + file[x:], optimize = True, quality = 95)
         except:
-            error_log("Resize of " + file, path)
+            general_lib.error_log("Resize of " + file, path)
     remove_jpgs(path)
     move_jpgs(path + TEMP_FOLDER, path)
 
 def resize_jpgs(path: str, max_img_size = MAX_IMG_SIZE, margin = MARGIN):
-    create_folder(path + TEMP_FOLDER)
+    general_lib.create_folder(path + TEMP_FOLDER)
     avg_img_size = get_avg_img_size(path)
     while avg_img_size > max_img_size:
         coefficient = get_resize_coef(max_img_size/avg_img_size, margin)
         resize_x1(path, coefficient)
         avg_img_size = get_avg_img_size(path)
-    remove_folder(path + TEMP_FOLDER)
+    general_lib.remove_folder(path + TEMP_FOLDER)
 
 ####################################################################################################
 #############################################   PDF   ##############################################
@@ -160,7 +112,7 @@ def get_jpgs_list(path: str, start: int, end: int):
     if start < 0 or end < 0:
         return sorted(jpgs)
     files = []
-    names_list = [path + get_img_name(x) + ".jpg" for x in range(start, end+1)]
+    names_list = [path + general_lib.get_img_name(x) + ".jpg" for x in range(start, end+1)]
     for name in names_list:
         if name in jpgs:
             files.append(name)
@@ -174,14 +126,14 @@ def convert_jpgs_to_pdf(path: str, pdf_name: str, start = -1, end = -1):
             img = Image.open(file)
             imgs.append(img)
         except:
-            error_log("PDF -> Opening Image " + file, path)
+            general_lib.error_log("PDF -> Opening Image " + file, path)
     if imgs: # not empty
         pdf_file = path + pdf_name + ".pdf"
         try:
             imgs[0].save(pdf_file, resolution = 100, save_all = True, append_images = imgs[1:])
             print(pdf_file + " Created Successfully")
         except:
-            error_log("Creating PDF " + pdf_file, path)
+            general_lib.error_log("Creating PDF " + pdf_file, path)
         for img in imgs:
             img.close()
         remove_jpgs(path, files)
@@ -197,7 +149,7 @@ def merge_pdfs(path: str, pdf_name: str):
         pdf.close()
         print(pdf_file + " Merged Successfully")
     except:
-        error_log("Merging PDF " + pdf_file, path)
+        general_lib.error_log("Merging PDF " + pdf_file, path)
 
 def split_pdf(path: str, pdf_name: str, split1: str, split2: str, split2_start_page: int):
     pdf_file  = path + pdf_name + ".pdf"
@@ -216,7 +168,7 @@ def split_pdf(path: str, pdf_name: str, split1: str, split2: str, split2_start_p
             pdf2.close()
             print(pdf_file + " Split Successful")
         except:
-            error_log("Splitting PDF " + pdf_file, path)
+            general_lib.error_log("Splitting PDF " + pdf_file, path)
 
 ####################################################################################################
 #############################################   Test   #############################################

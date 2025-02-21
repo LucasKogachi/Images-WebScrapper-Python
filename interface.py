@@ -1,3 +1,4 @@
+import general_lib
 import images_lib
 import scrapers_lib
 import archives_lib
@@ -16,48 +17,6 @@ class FolderNumber:
 def get_input(msg: str):
     return input(msg).strip()
 
-def get_folder_path(number: int):
-    return str(number).zfill(2) + "/"
-
-####################################################################################################
-####################################   Text/Folder Management   ####################################
-
-def create_folder(path: str):
-    if not os.path.exists(path):
-        os.mkdir(path)
-    
-def add_lines_to_file(lines: list, path: str, file: str):
-    if lines:
-        f = open(path + file, "a")
-        for line in lines:
-            f.write(line + "\n")
-        f.close()
-
-def get_lines_from_file(path: str, file: str):
-    lines = []
-    if os.path.isfile(path + file):
-        f = open(path + file, "r")
-        line = f.readline().strip()
-        while line:
-            lines.append(line)
-            line = f.readline().strip()
-        f.close()
-        os.remove(path + file)
-    return lines
-
-def remove_1x_line_from_file(path: str, file: str):
-    line = ""
-    lines = get_lines_from_file(path, file)
-    if lines:
-        line = lines[0]
-        add_lines_to_file(lines[1:], path, file)
-    return line
-
-def reattach_line_to_file(line: str, path: str, file: str):
-    lines = get_lines_from_file(path, file)
-    lines = [line] + lines
-    add_lines_to_file(lines, path, file)
-
 ####################################################################################################
 ########################################   Plan Download   #########################################
 
@@ -65,7 +24,7 @@ def create_optional_folder(path: str):
     msg = "Add New Folder in " + path + " (optional): "
     new_folder = get_input(msg)
     if new_folder:
-        create_folder(path + new_folder + "/")
+        general_lib.create_folder(path + new_folder + "/")
 
 def plan_download_menu(folder_numbers: FolderNumber):
     while True:
@@ -74,10 +33,10 @@ def plan_download_menu(folder_numbers: FolderNumber):
         url = get_input("URL: ")
         if url == "":
             break
-        plan_folder_path = get_folder_path(folder_numbers.planning)
+        plan_folder_path = general_lib.get_folder_path(folder_numbers.planning)
         folder_numbers.planning += 1
-        create_folder(plan_folder_path)
-        add_lines_to_file([url], plan_folder_path, URL_FILE)
+        general_lib.create_folder(plan_folder_path)
+        general_lib.add_lines_to_file([url], plan_folder_path, URL_FILE)
         create_optional_folder(plan_folder_path)
         print("Add PDF Titles (optional)")
         titles = []
@@ -88,7 +47,7 @@ def plan_download_menu(folder_numbers: FolderNumber):
                 titles.append(title)
                 title_number += 1
             else:
-                add_lines_to_file(titles, plan_folder_path, TITLES_FILE)
+                general_lib.add_lines_to_file(titles, plan_folder_path, TITLES_FILE)
                 break
 
 ####################################################################################################
@@ -106,9 +65,9 @@ def download_menu_options(folder_numbers: FolderNumber):
 def start_download(folder_numbers: FolderNumber):
     url = ""
     while True:
-        download_folder_path = get_folder_path(folder_numbers.download)
+        download_folder_path = general_lib.get_folder_path(folder_numbers.download)
         if os.path.isfile(download_folder_path + URL_FILE):
-            url = remove_1x_line_from_file(download_folder_path, URL_FILE)
+            url = general_lib.remove_1x_line_from_file(download_folder_path, URL_FILE)
             print("\nURL: " + url)
             if os.path.isfile(download_folder_path + URL_FILE):
                 os.remove(download_folder_path + URL_FILE)
@@ -116,10 +75,9 @@ def start_download(folder_numbers: FolderNumber):
             url = get_input("\nURL: ")
             if url == "":
                 break
-            create_folder(download_folder_path) # if it doesnt exist
+            general_lib.create_folder(download_folder_path) # if it doesnt exist
             create_optional_folder(download_folder_path)
-        delay = scrapers_lib.get_delay()
-        scrapers_lib.site_scrap(url, download_folder_path, delay[0], delay[1])
+        scrapers_lib.site_scrap(url, download_folder_path)
         print("Download COMPLETED")
         images_lib.convert_all_to_jpg(download_folder_path)
         images_lib.resize_jpgs(download_folder_path)
@@ -127,35 +85,35 @@ def start_download(folder_numbers: FolderNumber):
 
 def delay_menu_options(delay: list[float]):
     print("\nConfigure Delay Menu")
-    print("1 - Set Minimum Delay(" + scrapers_lib.float_to_str(delay[0], 1) + ")")
-    print("2 - Set Maximum Delay(" + scrapers_lib.float_to_str(delay[1], 1) + ")")
+    print("1 - Set Minimum Delay(" + general_lib.float_to_str(delay[0], 1) + ")")
+    print("2 - Set Maximum Delay(" + general_lib.float_to_str(delay[1], 1) + ")")
     print("X - Exit")
     option = get_input("\nChosen Option: ")
     print()
     return option
 
 def delay_menu():
-    delay = scrapers_lib.get_delay()
+    delay = general_lib.get_delay()
     while True:
         option = delay_menu_options(delay)
         if   option == "1": # Set Minimum Delay
-            msg = "\nMinimum Delay(" + scrapers_lib.float_to_str(delay[0], 1) + "): "
+            msg = "\nMinimum Delay(" + general_lib.float_to_str(delay[0], 1) + "): "
             min_delay = get_input(msg)
             try:
                 min_delay = float(min_delay)
                 if min_delay >= 0:
                     delay[0] = min_delay
-                    scrapers_lib.set_delay(delay[0], delay[1])
+                    general_lib.set_delay(delay[0], delay[1])
             except:
                 pass
         elif option == "2": # Set Maximum Delay
-            msg = "\nMaximum Delay(" + scrapers_lib.float_to_str(delay[1], 1) + "): "
+            msg = "\nMaximum Delay(" + general_lib.float_to_str(delay[1], 1) + "): "
             max_delay = get_input(msg)
             try:
                 max_delay = float(max_delay)
                 if max_delay > delay[0]:
                     delay[1] = max_delay
-                    scrapers_lib.set_delay(delay[0], delay[1])
+                    general_lib.set_delay(delay[0], delay[1])
             except:
                 pass
         else:
@@ -187,7 +145,7 @@ def pdf_menu_options(folder_numbers: FolderNumber):
     return option
 
 def convert_all_jpgs_to_pdf(path: str):
-    pdf_name = remove_1x_line_from_file(path, TITLES_FILE)
+    pdf_name = general_lib.remove_1x_line_from_file(path, TITLES_FILE)
     if pdf_name:
         print("PDF Name (" + TITLES_FILE + "): " + pdf_name)
     else:
@@ -199,14 +157,14 @@ def convert_all_jpgs_to_pdf(path: str):
 def convert_part_jpgs_to_pdf(path: str):
     start = 0
     while True:
-        pdf_name = remove_1x_line_from_file(path, TITLES_FILE)
+        pdf_name = general_lib.remove_1x_line_from_file(path, TITLES_FILE)
         if pdf_name:
             print("\nPDF Name (" + TITLES_FILE + "): " + pdf_name)
         else:
             pdf_name = get_input("\nPDF Name: ")
             if pdf_name == "":
                 break
-        msg = "Start Page(" + images_lib.get_img_name(start) + "): "
+        msg = "Start Page(" + general_lib.get_img_name(start) + "): "
         new_start = get_input(msg)
         try:
             new_start = int(new_start)
@@ -218,12 +176,12 @@ def convert_part_jpgs_to_pdf(path: str):
         try:
             end = int(end)
             if end < start:
-                reattach_line_to_file(pdf_name, path, TITLES_FILE)
+                general_lib.reattach_line_to_file(pdf_name, path, TITLES_FILE)
                 break
             images_lib.convert_jpgs_to_pdf(path, pdf_name, start, end)
             start = end + 1
         except:
-            reattach_line_to_file(pdf_name, path, TITLES_FILE)
+            general_lib.reattach_line_to_file(pdf_name, path, TITLES_FILE)
             break
 
 def merge_pdfs(path: str):
@@ -245,7 +203,7 @@ def split_pdf(path: str):
 
 def pdf_menu(folder_numbers: FolderNumber):
     while True:
-        working_folder_path = get_folder_path(folder_numbers.working)
+        working_folder_path = general_lib.get_folder_path(folder_numbers.working)
         option = pdf_menu_options(folder_numbers)
         if   option == "1": # convert all
             convert_all_jpgs_to_pdf(working_folder_path)
@@ -275,7 +233,7 @@ def archives_menu_options(folder_numbers: FolderNumber):
 
 def archives_menu(folder_numbers: FolderNumber):
     while True:
-        working_folder_path = get_folder_path(folder_numbers.working)
+        working_folder_path = general_lib.get_folder_path(folder_numbers.working)
         option = archives_menu_options(folder_numbers)
         if   option == "1": # update archive
             archives_lib.update_archive()
