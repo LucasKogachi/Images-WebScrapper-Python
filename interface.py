@@ -1,8 +1,9 @@
 import general_lib
-from general_lib import FolderNumber # class
+import settings_lib
 import images_lib
 import scrapers_lib
 import archives_lib
+from fn import FolderNumber # class
 import os
 
 def get_input(msg: str):
@@ -24,7 +25,7 @@ def plan_download_menu(folder_numbers: FolderNumber):
         url = get_input("URL: ")
         if url == "":
             break
-        plan_folder_path = general_lib.get_folder_path(folder_numbers.planning)
+        plan_folder_path = folder_numbers.get_planning_path()
         folder_numbers.planning += 1
         general_lib.create_folder(plan_folder_path)
         general_lib.add_lines_to_file([url], plan_folder_path, general_lib.URL_FILE)
@@ -47,7 +48,7 @@ def plan_download_menu(folder_numbers: FolderNumber):
 def download_menu_options(folder_numbers: FolderNumber):
     print("\nDownload Menu, Download Folder: " + str(folder_numbers.download))
     print("1 - Start Download")
-    print("2 - Configure Delay")
+    print("2 - Download Settings")
     print("X - Exit")
     option = get_input("\nChosen Option: ")
     print()
@@ -56,7 +57,7 @@ def download_menu_options(folder_numbers: FolderNumber):
 def start_download(folder_numbers: FolderNumber):
     url = ""
     while True:
-        download_folder_path = general_lib.get_folder_path(folder_numbers.download)
+        download_folder_path = folder_numbers.get_download_path()
         if os.path.isfile(download_folder_path + general_lib.URL_FILE):
             url = general_lib.remove_1x_line_from_file(download_folder_path, general_lib.URL_FILE)
             print("\nURL: " + url)
@@ -68,45 +69,54 @@ def start_download(folder_numbers: FolderNumber):
                 break
             general_lib.create_folder(download_folder_path) # if it doesnt exist
             create_optional_folder(download_folder_path)
-        scrapers_lib.site_scrap(url, folder_numbers.download)
+        scrapers_lib.site_scrap(url, folder_numbers)
         print("Download COMPLETED")
-        images_lib.convert_all_to_jpg(download_folder_path)
-        images_lib.resize_jpgs(download_folder_path)
+        settings = settings_lib.get_settings()
+        if settings["auto_convert_resize"]:
+            images_lib.convert_all_to_jpg(download_folder_path)
+            images_lib.resize_jpgs(download_folder_path)
         folder_numbers.download += 1
+        folder_numbers.save()
 
-def delay_menu_options(delay: list[float]):
-    print("\nConfigure Delay Menu")
-    print("1 - Set Minimum Delay(" + general_lib.float_to_str(delay[0], 1) + ")")
-    print("2 - Set Maximum Delay(" + general_lib.float_to_str(delay[1], 1) + ")")
+def settings_menu_options(settings: dict):
+    msg = "ON" if settings["auto_convert_resize"] else "OFF"
+    print("\nDownload Settings Menu")
+    print("1 - Set Minimum Delay(" + general_lib.float_to_str(settings["min_delay"], 1) + ")")
+    print("2 - Set Maximum Delay(" + general_lib.float_to_str(settings["max_delay"], 1) + ")")
+    print("3 - ON/OFF Auto Convert/Resize Images(" + msg + ")")
     print("X - Exit")
     option = get_input("\nChosen Option: ")
     print()
     return option
 
-def delay_menu():
-    delay = general_lib.get_delay()
+def settings_menu():
+    settings = settings_lib.get_settings()
     while True:
-        option = delay_menu_options(delay)
+        option = settings_menu_options(settings)
         if   option == "1": # Set Minimum Delay
-            msg = "\nMinimum Delay(" + general_lib.float_to_str(delay[0], 1) + "): "
+            msg = "\nMinimum Delay(" + general_lib.float_to_str(settings["min_delay"], 1) + "): "
             min_delay = get_input(msg)
             try:
                 min_delay = float(min_delay)
-                if min_delay >= 0:
-                    delay[0] = min_delay
-                    general_lib.set_delay(delay[0], delay[1])
+                if min_delay > 0:
+                    settings["min_delay"] = min_delay
+                    settings_lib.save_settings(settings)
             except:
                 pass
         elif option == "2": # Set Maximum Delay
-            msg = "\nMaximum Delay(" + general_lib.float_to_str(delay[1], 1) + "): "
+            msg = "\nMaximum Delay(" + general_lib.float_to_str(settings["max_delay"], 1) + "): "
             max_delay = get_input(msg)
             try:
                 max_delay = float(max_delay)
-                if max_delay > delay[0]:
-                    delay[1] = max_delay
-                    general_lib.set_delay(delay[0], delay[1])
+                if max_delay > settings["min_delay"]:
+                    settings["max_delay"] = max_delay
+                    settings_lib.save_settings(settings)
             except:
                 pass
+        elif option == "3": # ON/OFF Auto Convert/Resize Images
+            print()
+            settings["auto_convert_resize"] = not settings["auto_convert_resize"]
+            settings_lib.save_settings(settings)
         else:
             break
 
@@ -115,21 +125,22 @@ def download_menu(folder_numbers: FolderNumber):
         option = download_menu_options(folder_numbers)
         if   option == "1": # Start Download
             start_download(folder_numbers)
-        elif option == "2": # Configure Delay
-            delay_menu()
+        elif option == "2": # Download Settings
+            settings_menu()
         else:
             break
 
 ####################################################################################################
-#############################################   PDF   ##############################################
+###########################################   Working   ############################################
 
-def pdf_menu_options(folder_numbers: FolderNumber):
-    print("\nPDF Menu, Working Folder: " + str(folder_numbers.working))
+def working_menu_options(folder_numbers: FolderNumber):
+    print("\nWorking Menu, Working Folder: " + str(folder_numbers.working))
     print("1 - Convert ALL jpgs to PDF")
     print("2 - Convert PART of jpgs to PDF")
     print("3 - Next Working Folder")
     print("4 - Merge PDFs")
     print("5 - Split PDF")
+    print("6 - Manual Convert/Resize Images")
     print("X - Exit")
     option = get_input("\nChosen Option: ")
     print()
@@ -192,10 +203,10 @@ def split_pdf(path: str):
     except:
         pass
 
-def pdf_menu(folder_numbers: FolderNumber):
+def working_menu(folder_numbers: FolderNumber):
     while True:
-        working_folder_path = general_lib.get_folder_path(folder_numbers.working)
-        option = pdf_menu_options(folder_numbers)
+        working_folder_path = folder_numbers.get_working_path()
+        option = working_menu_options(folder_numbers)
         if   option == "1": # convert all
             convert_all_jpgs_to_pdf(working_folder_path)
         elif option == "2": # convert part
@@ -206,6 +217,10 @@ def pdf_menu(folder_numbers: FolderNumber):
             merge_pdfs(working_folder_path)
         elif option == "5": # split pdf
             split_pdf(working_folder_path)
+        elif option == "6": # manual convert/resize imgs
+            images_lib.convert_all_to_jpg(working_folder_path)
+            images_lib.resize_jpgs(working_folder_path)
+            print("Manual Convert/Resize COMPLETED")
         else:
             break
 
@@ -224,7 +239,7 @@ def archives_menu_options(folder_numbers: FolderNumber):
 
 def archives_menu(folder_numbers: FolderNumber):
     while True:
-        working_folder_path = general_lib.get_folder_path(folder_numbers.working)
+        working_folder_path = folder_numbers.get_working_path()
         option = archives_menu_options(folder_numbers)
         if   option == "1": # update archive
             archives_lib.update_archive()
@@ -283,7 +298,7 @@ def main_menu_options():
     print("\nWeb Image Scraping")
     print("1 - Plan Download")
     print("2 - Start Planned Download")
-    print("3 - PDF")
+    print("3 - Working(PDF/others)")
     print("4 - Archives")
     print("5 - Set Folder Numbers")
     print("X - Exit")
@@ -299,13 +314,14 @@ def main_menu():
             plan_download_menu(folder_numbers)
         elif option == "2": # scrapers
             download_menu(folder_numbers)
-        elif option == "3": # pdf
-            pdf_menu(folder_numbers)
+        elif option == "3": # working
+            working_menu(folder_numbers)
         elif option == "4": # archives
             archives_menu(folder_numbers)
         elif option == "5": # set folder numbers
             folder_number_menu(folder_numbers)
         else:               # exit
+            folder_numbers.save()
             break
 
 ####################################################################################################

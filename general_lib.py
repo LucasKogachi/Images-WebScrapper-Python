@@ -3,17 +3,6 @@ from PIL import Image # pip install pillow
 import requests       # pip install requests
 
 ####################################################################################################
-############################################   Class   #############################################
-
-DEFAULT_FOLDER_NUMBER = 1 # starting folder number
-
-class FolderNumber:
-    def __init__(self):
-        self.planning = DEFAULT_FOLDER_NUMBER
-        self.download = DEFAULT_FOLDER_NUMBER
-        self.working  = DEFAULT_FOLDER_NUMBER
-
-####################################################################################################
 ############################################   Errors   ############################################
 
 ERROR_FILE  = "errors.txt"
@@ -24,6 +13,10 @@ def error_log(msg: str, path: str = ""):
     f.write(error + "\n")
     f.close()
     print(error)
+
+def warning(msg: str, duration: float = 5):
+    print("\nWARNING: " + msg + "\n")
+    time.sleep(duration)
 
 ####################################################################################################
 ######################################   Folder Management   #######################################
@@ -44,9 +37,6 @@ def remove_folder(path: str):
 
 def get_img_name(number: int, img_zfill: int = 3):
     return str(number).zfill(img_zfill)
-
-def get_folder_path(number: int, dir_zfill: int = 4):
-    return str(number).zfill(dir_zfill) + "/"
 
 def float_to_str(number: float, max_cases: int): # trunc
     number_str = str(number)
@@ -95,33 +85,6 @@ def reattach_line_to_file(line: str, path: str, file: str):
 
 ####################################################################################################
 ############################################   Delay   #############################################
-
-DELAY_FILE = "delay.txt"
-MIN_DELAY_TIME = 4.0 # seconds
-MAX_DELAY_TIME = 8.0 # seconds
-
-def set_delay(min_delay: float, max_delay: float):
-    f = open(DELAY_FILE, "w")
-    f.write(str(min_delay) + "\n")
-    f.write(str(max_delay) + "\n")
-    f.close()
-
-def get_delay():
-    if os.path.isfile(DELAY_FILE):
-        f = open(DELAY_FILE, "r")
-        try:
-            min_delay = float(f.readline().strip())
-            max_delay = float(f.readline().strip())
-        except:
-            error_log("Reading Delay File")
-            min_delay = MIN_DELAY_TIME
-            max_delay = MAX_DELAY_TIME
-        f.close()
-        return [min_delay, max_delay]
-    else:
-        print("oi")
-        set_delay(MIN_DELAY_TIME, MAX_DELAY_TIME)
-        return [MIN_DELAY_TIME, MAX_DELAY_TIME]
 
 def run_delay(min_delay: float, max_delay: float):
     # Trying to avoid IP Block, by lots of requests

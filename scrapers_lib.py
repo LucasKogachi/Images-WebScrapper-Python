@@ -1,5 +1,6 @@
 import general_lib
-from general_lib import FolderNumber # class
+import settings_lib
+from fn import FolderNumber # class
 import requests                      # pip install requests
 from bs4 import BeautifulSoup        # pip install beautifulsoup4
 # pip install html5lib, BeatifulSoup needs it, but no need to import
@@ -13,34 +14,45 @@ def url_match(url: str, match_list: list[str]): # many sites
 ####################################################################################################
 ###########################################   Scrapers   ###########################################
 
-def mangakakalot_scraper(url: str, download_folder_number: int):
-    # entire manga
-    if url.find("chapter") == -1:
-        page = requests.get(url)
-        soup = BeautifulSoup(page.content, "html5lib")
-        gallery = soup.find("ul", {"class": "row-content-chapter"})
-        children = gallery.findChildren("a", recursive = True)
-        chapters = []
-        for child in children:
-            chapter = child.get("href")
-            chapters.append(chapter)
-        chapters.reverse()
-        if chapters:
-            start = download_folder_number + 1
-            for chapter in chapters[1:]:
-                new_folder = general_lib.get_folder_path(start)
-                general_lib.create_folder(new_folder)
-                general_lib.add_lines_to_file([chapter], new_folder, general_lib.URL_FILE)
-                start += 1
-            url = chapters[0]
+def mangakakalot_headers(url: str):
+    if   url.find("mangakakalot.com")  != -1:
+        return {"Referer": "https://mangakakalot.com/"}
+    elif url.find("chapmanganato.to")  != -1:
+        return {"Referer": "https://chapmanganato.to/"}
+    elif url.find("chapmanganelo.com") != -1:
+        return {"Referer": "https://chapmanganelo.com/"}
+    elif url.find("natomanga.com")     != -1:
+        return {"Referer": "https://www.natomanga.com/"}
+    elif url.find("mangakakalot.gg")   != -1:
+        return {"Referer": "https://www.mangakakalot.gg/"}
+    return {}
 
-    # chapter
-    dest_path = general_lib.get_folder_path(download_folder_number)
-    header = {}
-    if url.find("chapmanganato") != -1:
-        header = {"Referer": "https://chapmanganato.to/"}
-    else:      # mangakakalot
-        header = {"Referer": "https://mangakakalot.com/"}
+def mangakakalot_manga(url: str, folder_numbers: FolderNumber):
+    general_lib.warning("ONGOING Planning, Don't use this function, until its finished")
+    if url.find("chapter") != -1:
+        return url
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html5lib")
+    gallery = soup.find("ul", {"class": "row-content-chapter"})
+    children = gallery.findChildren("a", recursive = True)
+    chapters = []
+    for child in children:
+        chapter = child.get("href")
+        chapters.append(chapter)
+    chapters.reverse()
+    if chapters:
+        for chapter in chapters[1:]:
+            new_folder = folder_numbers.get_planning_path()
+            general_lib.create_folder(new_folder)
+            general_lib.add_lines_to_file([chapter], new_folder, general_lib.URL_FILE)
+            folder_numbers.planning += 1
+        url = chapters[0]
+    general_lib.warning("Planning FINISHED, You can use it again")
+    return url
+
+def mangakakalot_chapter(url: str, folder_numbers: FolderNumber):
+    dest_path = folder_numbers.get_download_path()
+    header = mangakakalot_headers(url)
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html5lib")
     gallery = soup.find("div", {"class": "container-chapter-reader"})
@@ -50,15 +62,20 @@ def mangakakalot_scraper(url: str, download_folder_number: int):
         url = child.get("src")
         general_lib.download_img(url, count, dest_path, header)
         count += 1
-    delay = general_lib.get_delay()
-    general_lib.run_delay(count * delay[0], count * delay[1])
+    settings = settings_lib.get_settings()
+    general_lib.run_delay(count * settings["min_delay"], count * settings["max_delay"])
+
+def mangakakalot_scraper(url: str, folder_numbers: FolderNumber):
+    url = mangakakalot_manga(url, folder_numbers)
+    mangakakalot_chapter(url, folder_numbers)
 
 ####################################################################################################
 ###########################################   Selector   ###########################################
 
-def site_scrap(url: str, download_folder_number: int):
-    if   url_match(url, ["chapmanganato", "mangakakalot"]):
-        mangakakalot_scraper(url, download_folder_number)
+def site_scrap(url: str, folder_numbers: FolderNumber):
+    mangakakalot_matches = ["mangakakalot", "manganato", "manganelo", "natomanga"]
+    if   url_match(url, mangakakalot_matches):
+        mangakakalot_scraper(url, folder_numbers)
     else:
         general_lib.error_log("No Scraper for " + url)
 
