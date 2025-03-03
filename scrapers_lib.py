@@ -4,6 +4,7 @@ from fn import FolderNumber # class
 import requests                      # pip install requests
 from bs4 import BeautifulSoup        # pip install beautifulsoup4
 # pip install html5lib, BeatifulSoup needs it, but no need to import
+import re
 
 def url_match(url: str, match_list: list[str]): # many sites
     for match in match_list:
@@ -33,10 +34,10 @@ def mangakakalot_manga(url: str, folder_numbers: FolderNumber):
     general_lib.warning("ONGOING Planning, Don't use this function, until its finished")
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html5lib")
-    if url.find("mangakakalot") != -1:
-        gallery = soup.find("ul", {"class": "row-content-chapter"})
-    else:
-        gallery = soup.find("div", {"class": "chapter-list"})
+    # if url.find("mangakakalot") != -1:
+    #     gallery = soup.find("ul", {"class": "row-content-chapter"})
+    # else: # natomanga
+    gallery = soup.find("div", {"class": "chapter-list"})
     children = gallery.findChildren("a", recursive = True)
     chapters = []
     for child in children:
@@ -64,6 +65,29 @@ def mangakakalot_chapter(url: str, folder_numbers: FolderNumber):
     count = 1
     for child in children:
         url = child.get("src")
+        general_lib.download_img(url, count, dest_path, header)
+        count += 1
+    settings = settings_lib.get_settings()
+    general_lib.run_delay(count * settings["min_delay"], count * settings["max_delay"])
+
+def natomanga_chapter(url: str, folder_numbers: FolderNumber):
+    dest_path = folder_numbers.get_download_path()
+    header = {"Referer": "https://www.natomanga.com/"}
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html5lib")
+    gallery = soup.find("div", {"class": "container-chapter-reader"})
+    children = gallery.findChildren("img", recursive = False)
+    count = 1
+    for child in children:
+        url = child.get("src")
+        if url.find("virus") != -1: # found
+            onerror = child.get("onerror")
+            url = re.search(r"this.src='(.*?)'", onerror)
+            if url:
+                url = url.group(1)
+            else:
+                print(child)
+        print(url)
         general_lib.download_img(url, count, dest_path, header)
         count += 1
     settings = settings_lib.get_settings()
