@@ -33,7 +33,10 @@ def mangakakalot_manga(url: str, folder_numbers: FolderNumber):
         return url
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html5lib")
-    gallery = soup.find("ul", {"class": "row-content-chapter"})
+    if url.find("mangakakalot") != -1:
+        gallery = soup.find("ul", {"class": "row-content-chapter"})
+    else:
+        gallery = soup.find("div", {"class": "chapter-list"})
     children = gallery.findChildren("a", recursive = True)
     chapters = []
     for child in children:
@@ -41,6 +44,7 @@ def mangakakalot_manga(url: str, folder_numbers: FolderNumber):
         chapters.append(chapter)
     chapters.reverse()
     if chapters:
+        folder_numbers.planning += 1
         for chapter in chapters[1:]:
             new_folder = folder_numbers.get_planning_path()
             general_lib.create_folder(new_folder)
