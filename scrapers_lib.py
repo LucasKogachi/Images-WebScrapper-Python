@@ -28,9 +28,9 @@ def mangakakalot_headers(url: str):
     return {}
 
 def mangakakalot_manga(url: str, folder_numbers: FolderNumber):
-    general_lib.warning("ONGOING Planning, Don't use this function, until its finished")
     if url.find("chapter") != -1:
         return url
+    general_lib.warning("ONGOING Planning, Don't use this function, until its finished")
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html5lib")
     if url.find("mangakakalot") != -1:

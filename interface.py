@@ -76,6 +76,8 @@ def start_download(folder_numbers: FolderNumber):
             images_lib.convert_all_to_jpg(download_folder_path)
             images_lib.resize_jpgs(download_folder_path)
         folder_numbers.download += 1
+        if folder_numbers.download > folder_numbers.planning:
+            folder_numbers.planning = folder_numbers.download
         folder_numbers.save()
 
 def settings_menu_options(settings: dict):
