@@ -95,7 +95,7 @@ def natomanga_chapter(url: str, folder_numbers: FolderNumber):
 
 def mangakakalot_scraper(url: str, folder_numbers: FolderNumber):
     url = mangakakalot_manga(url, folder_numbers)
-    mangakakalot_chapter(url, folder_numbers)
+    natomanga_chapter(url, folder_numbers)
 
 ####################################################################################################
 ###########################################   Selector   ###########################################
