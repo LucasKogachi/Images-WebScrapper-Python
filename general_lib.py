@@ -115,7 +115,11 @@ def download_img(url: str, img_number: int, dest_path: str, headers: dict = {}):
     img_name = get_img_name(img_number)
     x = url.rfind(".")                                     # getting extension
     img_file = dest_path + img_name + url[x:].lower()
-    r = requests.get(url, stream = True, headers=headers)  # stream, no interruptions
+    for _ in range(3):
+        r = requests.get(url, stream = True, headers=headers)  # stream, no interruptions
+        if r.status_code == 200:
+            break
+        time.sleep(3)
     if r.status_code == 200:
         with open(img_file, 'wb') as file:
             r.raw.decode_content = True           # force decompress, instead from request
