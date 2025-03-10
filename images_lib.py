@@ -48,16 +48,22 @@ def move_jpgs(src_path: str, dest_path: str):
         except:
             general_lib.error_log("Moving " + file, dest_path)
 
-def rename_jpgs(path: str, start = 1): # not using
+def rename_jpgs(path: str, start = 1):
     general_lib.create_folder(path + TEMP_FOLDER)
-    N = start
-    for file in sorted(glob.glob(path + "*.jpg")):
+    x = len(path)
+    for file in glob.glob(path + "*.jpg"):
         try:
+            N = int(file[x:(-4)])
             shutil.move(file, path + TEMP_FOLDER + general_lib.get_img_name(N) + ".jpg")
+        except:
+            general_lib.error_log("Renaming " + file, path)
+    N = start
+    for file in sorted(glob.glob(path + TEMP_FOLDER + "*.jpg")):
+        try:
+            shutil.move(file, path + general_lib.get_img_name(N) + ".jpg")
             N += 1
         except:
             general_lib.error_log("Renaming " + file, path)
-    move_jpgs(path + TEMP_FOLDER, path)
     general_lib.remove_folder(path + TEMP_FOLDER)
 
 ####################################################################################################
@@ -88,7 +94,7 @@ def resize_x1(path: str, coefficient: float):
     for file in glob.glob(path + "*.jpg"):
         try:
             with Image.open(file) as img:
-                img.thumbnail(new_img_size(coefficient, img.size), Image.ANTIALIAS)
+                img.thumbnail(new_img_size(coefficient, img.size), Image.LANCZOS)
                 img.save(path + TEMP_FOLDER + file[x:], optimize = True, quality = 95)
         except:
             general_lib.error_log("Resize of " + file, path)

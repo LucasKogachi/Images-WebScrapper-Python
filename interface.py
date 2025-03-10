@@ -222,6 +222,7 @@ def working_menu(folder_numbers: FolderNumber):
         elif option == "6": # manual convert/resize imgs
             images_lib.convert_all_to_jpg(working_folder_path)
             images_lib.resize_jpgs(working_folder_path)
+            images_lib.rename_jpgs(working_folder_path)
             print("Manual Convert/Resize COMPLETED")
         else:
             break
