@@ -1,7 +1,8 @@
 import general_lib
 import os, shutil, glob, math
-from PIL import Image # pip install pillow
-import fitz           # pip install pymupdf
+from natsort import os_sorted # pip install natsort
+from PIL import Image         # pip install pillow
+import fitz                   # pip install pymupdf
 
 TEMP_FOLDER = "Temp/"           # dont forget "/" at the end, if not empty
 EXTENSIONS  = ["png", "webp"]   # to convert to jpg
@@ -50,20 +51,14 @@ def move_jpgs(src_path: str, dest_path: str):
 
 def rename_jpgs(path: str, start = 1):
     general_lib.create_folder(path + TEMP_FOLDER)
-    x = len(path)
-    for file in glob.glob(path + "*.jpg"):
+    N = start
+    for file in os_sorted(glob.glob(path + "*.jpg")):
         try:
-            N = int(file[x:(-4)])
             shutil.move(file, path + TEMP_FOLDER + general_lib.get_img_name(N) + ".jpg")
         except:
             general_lib.error_log("Renaming " + file, path)
-    N = start
-    for file in sorted(glob.glob(path + TEMP_FOLDER + "*.jpg")):
-        try:
-            shutil.move(file, path + general_lib.get_img_name(N) + ".jpg")
-            N += 1
-        except:
-            general_lib.error_log("Renaming " + file, path)
+        N += 1
+    move_jpgs(path + TEMP_FOLDER, path)
     general_lib.remove_folder(path + TEMP_FOLDER)
 
 ####################################################################################################
